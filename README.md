@@ -3,6 +3,13 @@
 
 **Anomaly Detection, Case/Runbook Retrieval, Evidence-based Analysis, and Agent Backend**
 
+<p>
+  <img src="https://img.shields.io/badge/Status-Work%20in%20Progress-EAA12B?style=flat-square" alt="Work in Progress">
+  <img src="https://img.shields.io/badge/Project-Team%20Project-3561D8?style=flat-square" alt="Team Project">
+  <img src="https://img.shields.io/badge/Role-Team%20Lead-151F32?style=flat-square" alt="Team Lead">
+  <img src="https://img.shields.io/badge/Area-Agent%20%26%20Backend-21AFC4?style=flat-square" alt="Agent Backend">
+</p>
+
 > 웹서비스 요청 로그에서 이상 사건을 탐지하고,
 > 관련 사례·Runbook을 검색해 **근거 기반 원인 후보와 사건 분석 결과**로 연결하는
 > AI종합설계 팀 프로젝트입니다.
