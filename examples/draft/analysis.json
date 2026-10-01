@@ -1,0 +1,31 @@
+{
+  "schema_version": "draft-1",
+  "experiment_id": "exp-sample-001",
+  "event_id": "evt-001",
+  "analysis_status": "analyzed",
+  "judgment_deferred": true,
+  "cause_candidates": [
+    {
+      "rank": 1,
+      "cause": "주문 처리 경로의 서버 예외 가능성",
+      "confidence": "low",
+      "reasoning_summary": "관측: /orders 요청 10건 중 5건에서 HTTP 500 관측. 참고 문서 doc-014 (temporary-example:doc-014): HTTP 500이 늘어난 과거 사례의 원인 후보로 주문 처리 경로의 서버 예외 가능성이 기록되었다. 서버 예외 기록과 의존 서비스 상태를 확인한다. 이 문서의 가능한 원인을 후보로만 제시하며 현재 사건의 원인은 확인되지 않았다.",
+      "evidence_log_ids": [],
+      "evidence_document_ids": [
+        "doc-014"
+      ]
+    }
+  ],
+  "uncertainty": "검색 문서의 과거 원인이 현재 사건에도 해당하는지 확인되지 않았다.",
+  "additional_checks": [
+    "동일 시각 서버 예외 기록 확인",
+    "의존 서비스 상태 확인"
+  ],
+  "recommended_actions": [],
+  "used_documents": [
+    "doc-014"
+  ],
+  "errors": [],
+  "generated_at": "2026-09-29T01:29:42Z",
+  "model_or_rule_version": "draft-rule-1"
+}

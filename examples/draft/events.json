@@ -1,0 +1,20 @@
+{
+  "schema_version": "draft-1",
+  "experiment_id": "exp-sample-001",
+  "detector_name": "temporary_example",
+  "detector_version": "draft-1",
+  "events": [{
+    "event_id": "evt-001",
+    "start_time": "2026-09-29T00:00:00Z",
+    "end_time": "2026-09-29T00:01:00Z",
+    "detected_at": "2026-09-29T00:00:30Z",
+    "affected_endpoint": "/orders",
+    "anomaly_type": "error_rate_increase",
+    "observed_symptoms": ["/orders 요청 10건 중 5건에서 HTTP 500 관측"],
+    "request_count": 10,
+    "error_rate": 0.5,
+    "latency_summary": {"mean_ms": 72.0, "p95_ms": 130.0},
+    "anomaly_score": null,
+    "evidence_log_ids": ["req-021"]
+  }]
+}

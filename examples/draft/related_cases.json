@@ -1,0 +1,21 @@
+{
+  "schema_version": "draft-1",
+  "experiment_id": "exp-sample-001",
+  "event_id": "evt-001",
+  "status": "ok",
+  "query": "/orders 요청 10건 중 5건에서 HTTP 500 관측",
+  "retrieval_method": "temporary_fixture",
+  "results": [{
+    "rank": 1,
+    "document_id": "doc-014",
+    "chunk_id": "chunk-014-01",
+    "document_type": "case",
+    "title": "주문 API 오류 사례 예시",
+    "source_type": "team",
+    "source": "temporary-example:doc-014",
+    "relevance_score": null,
+    "matched_evidence": "HTTP 500이 늘어난 과거 사례의 원인 후보로 주문 처리 경로의 서버 예외 가능성이 기록되었다. 서버 예외 기록과 의존 서비스 상태를 확인한다.",
+    "possible_cause": "주문 처리 경로의 서버 예외 가능성",
+    "recommended_checks": ["동일 시각 서버 예외 기록 확인", "의존 서비스 상태 확인"]
+  }]
+}
