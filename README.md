@@ -59,8 +59,12 @@
 | **Agent 방향** | 관측 데이터와 검색 근거를 기반으로 원인 후보·근거·불확실성 구조화 |
 | **평가 원칙** | Ground Truth를 모델·Agent 입력에서 분리 |
 
-현재 공개 저장소에는 설계 및 진행 문서가 있으며,
-Agent·Backend의 로컬 연결 초안은 아직 공개 저장소에 포함되어 있지 않습니다.
+현재 공개 저장소에는 설계·진행 문서와 함께,
+Agent·Backend 연결 초안인 `incident_analysis.py`, 테스트 코드,
+그리고 임시 Event·Retrieval·Analysis 예제가 포함되어 있습니다.
+
+현재 공개 구현은 실제 AI 이상탐지·TF-IDF 검색·LLM을 연결한 최종 시스템이 아니라,
+모듈 간 입력·출력과 근거 검증 흐름을 확인하기 위한 **규칙 기반 Draft Implementation**입니다.
 
 ---
 
@@ -72,7 +76,7 @@ Agent·Backend의 로컬 연결 초안은 아직 공개 저장소에 포함되�
 | AI 이상 점수가 실제 장애 원인처럼 해석될 수 있음 | 이상탐지 결과와 원인 분석 결과를 분리 | Detection과 Cause Analysis 역할 구분 |
 | 평가용 장애 정보가 입력에 포함되면 정답 누출이 발생함 | Ground Truth와 실제 분석 입력 분리 원칙 및 Interface 설계 | 평가 구조에 반영 |
 | 탐지 결과만으로 원인을 설명하기 어려움 | 사례·Runbook 검색 결과를 Agent 근거로 전달 | Retrieval 구현·연결 진행 중 |
-| Agent가 근거 없는 원인을 생성할 수 있음 | 근거 문서 ID·출처·불확실성 및 판단 보류 구조 설계 | 로컬 연결 초안에 일부 반영 |
+| Agent가 근거 없는 원인을 생성할 수 있음 | 근거 문서 ID·출처·불확실성 및 판단 보류 구조 설계 | 공개 Draft에 일부 반영 |
 | 팀원이 각 모듈을 별도로 개발함 | JSON 기반 Input / Output Interface 정의 | 모듈 연결 규격 조율 중 |
 
 ---
@@ -290,40 +294,74 @@ Evidence-based Cause Analysis
 근거가 충분하지 않은 경우
 원인을 임의로 확정하지 않고 판단을 보류하도록 구성합니다.
 
-### Local Agent Draft
+### Draft Implementation
 
-현재 로컬 연결 초안은
-임시 사건과 가상 검색 결과를 입력으로 받아 다음 흐름을 수행합니다.
+현재 공개된 `incident_analysis.py`는
+임시 Event와 Retrieval 결과를 이용해
+Agent·Backend 연결 규격과 근거 검증 흐름을 확인하는 **규칙 기반 연결 초안**입니다.
 
 ```text
-입력 검증
+events.json
+→ 사건·관측 정보 검증
+→ Retrieval Query 생성
+→ related_cases.json 연결
 → 규칙 기반 원인 후보 생성
-→ 근거 문서 ID 확인
+→ 근거 문서 ID 검증
 → 판단 보류 처리
 → analysis.json 저장
 ```
 
-현재 초안에서 사용하는 주요 필드는 다음과 같습니다.
+현재 구현의 주요 입력·출력은 다음과 같습니다.
+
+```text
+examples/draft/events.json
+        ↓
+incident_analysis.py
+        +
+examples/draft/related_cases.json
+        ↓
+examples/draft/analysis.json
+```
+
+현재 주요 분석 출력 필드는 다음과 같습니다.
 
 ```text
 experiment_id
 event_id
 analysis_status
-cause_candidates
-  └─ evidence_document_ids
 judgment_deferred
+cause_candidates
+  ├─ cause
+  ├─ confidence
+  ├─ reasoning_summary
+  └─ evidence_document_ids
+uncertainty
 additional_checks
+recommended_actions
+used_documents
+errors
 ```
 
-현재 초안은 `experiment_id`와 `event_id`를 사건 식별에 사용합니다.
+현재 규칙 분석은 검색 문서의 HTTP 상태 코드가 실제 사건 관측과 일치하고,
+문서에 명시된 원인 후보가 근거 문장에 존재할 때만 후보를 생성합니다.
 
-다만 세부 필드와 저장 방식은
-**Agent·Backend 연결을 위한 초안이며 팀 전체의 최종 합의 규격은 아닙니다.**
+또한 후보가 참조한 `evidence_document_ids`가
+실제 Retrieval 결과에 존재하는지 검증합니다.
 
-실제 Detection 및 Retrieval 출력과 대조한 뒤
-최종 Schema를 확정할 예정입니다.
+근거가 충분하지 않은 경우:
 
-또한 이 초안은 현재 다음과 연결된 결과가 아닙니다.
+```text
+analysis_status = insufficient_evidence
+cause_candidates = []
+judgment_deferred = true
+```
+
+로 처리하여 원인을 임의로 확정하지 않습니다.
+
+현재 Schema와 세부 필드는 **팀 전체 최종 합의 이전의 Draft**이며,
+실제 Detection 및 Retrieval 출력과 대조한 뒤 조정할 예정입니다.
+
+현재 공개 구현은 다음과 직접 연결된 결과가 아닙니다.
 
 ```text
 실제 AI 이상탐지 결과
@@ -332,46 +370,45 @@ additional_checks
 실제 UI·보고서
 ```
 
-</details>
-
-<details>
-<summary><b>06 | Ground Truth Separation</b></summary>
-
-<br>
-
-장애 실험 과정에서 알고 있는 실제 장애 정보는
-평가용 Ground Truth로 별도 관리합니다.
-
-예를 들면 다음과 같습니다.
-
-```text
-실제 장애 종류
-발생 시작 시점
-종료 시점
-장애 조건
-실제 원인
-```
-
-이 정보가 모델이나 Agent 입력에 포함되면
-시스템이 정답을 미리 알고 분석하는 문제가 발생할 수 있습니다.
-
-따라서 다음과 같이 분리하는 것을 원칙으로 합니다.
-
-```text
-System Input
-→ 요청 로그 / 집계 특징 / 탐지 결과 / 검색 결과
-
-Evaluation Ground Truth
-→ 실제 장애 종류 / 발생 시점 / 실제 원인
-```
-
-현재는 **정답 누출 방지를 위한 평가 데이터·분석 입력 분리 원칙과
-Interface를 설계한 단계**이며,
-전체 End-to-End Pipeline에서의 누출 방지 검증은 아직 완료되지 않았습니다.
+`incident_analysis.py`의 현재 `analyze()`는 LLM Agent가 아니라
+향후 분석 모듈 연결 전 입출력·근거 검증을 확인하기 위한 규칙 기반 기준선입니다.
 
 </details>
 
 ---
+
+## Run and Verify
+
+현재 공개 Draft는 Python 표준 라이브러리만 사용합니다.
+
+프로젝트 루트에서 다음과 같이 실행할 수 있습니다.
+
+```powershell
+python incident_analysis.py --events examples/draft/events.json --related examples/draft/related_cases.json --event-id evt-001 --output examples/draft/analysis.json
+```
+
+테스트 실행:
+
+```powershell
+python -m unittest -v test_incident_analysis
+```
+
+현재 공개 테스트 코드에는 다음과 같은 검증이 포함되어 있습니다.
+
+- Ground Truth 및 실제 원인 정보가 분석 요청으로 전달되지 않는지 확인
+- Event와 Retrieval의 사건 ID·Query 일치 확인
+- 존재하지 않는 근거 문서 ID 거부
+- 검색 결과가 없을 때 판단 보류
+- 관측과 검색 근거가 일치하지 않을 때 후보 생성 보류
+- 필수 필드 누락 거부
+- 규칙 기반 분석이 원인을 확정하지 못하도록 제한
+- 관측 문장과 구조화 수치의 일치 확인
+
+현재 테스트 파일에는 **15개의 Unit Test가 포함되어 있습니다.**
+
+과거 AI 코딩 도구 실행 기록에서는 해당 테스트의 통과가 기록되어 있으나,
+김수진의 직접 실행·수정·설명 재검증 전까지
+이를 개인의 재검증 완료 결과로 표시하지 않습니다.
 
 ## Current Scope and Limitations
 
@@ -394,10 +431,14 @@ Interface를 설계한 단계**이며,
 각 모듈의 입력·출력을 연결하는 단계입니다.
 
 현재 공개 GitHub 저장소에는
-Agent·Backend 실행 코드가 아직 포함되어 있지 않습니다.
+Agent·Backend 연결 초안인 `incident_analysis.py`,
+테스트 코드와 Draft JSON 예제가 포함되어 있습니다.
 
-로컬 연결 초안은 AI 코딩 도구를 활용해 작성·수정·실행된 기록이 있으며,
-김수진의 직접 실행·수정·설명 확인 범위는 별도로 검증해 기록할 예정입니다.
+현재 구현은 임시 Event와 가상 Retrieval 결과를 사용하는 규칙 기반 Draft이며,
+실제 Detection·TF-IDF Retrieval·LLM·UI와의 End-to-End 연결은 아직 진행 중입니다.
+
+초기 Draft는 AI 코딩 도구를 활용해 작성·수정·실행된 기록이 있으며,
+김수진의 직접 실행·수정·설명 확인 범위는 별도로 재검증해 기록할 예정입니다.
 
 UI·보고서는 현재 확인된 범위에서
 **예시 데이터 기반 목업·계획 단계**입니다.
@@ -416,8 +457,8 @@ UI·보고서는 현재 확인된 범위에서
 - Detection → Retrieval → Agent 간 JSON Interface 설계
 - Ground Truth와 실제 분석 입력 분리 원칙
 - 근거 문서 ID·출처·불확실성을 포함한 Agent 출력 설계
-- Agent·Backend 로컬 연결 초안
-- 사건 식별자 기준 JSON 파일 저장 방식 설계 — 로컬 초안은 `experiment_id`와 `event_id` 사용, 최종 저장 규격은 팀 조율 중
+- 공개된 Agent·Backend 규칙 기반 연결 초안
+- 사건 식별자 기준 JSON 파일 저장 방식 설계 — 공개 Draft는 `experiment_id`와 `event_id` 사용, 최종 저장 규격은 팀 조율 중
 
 ### Limitations
 
